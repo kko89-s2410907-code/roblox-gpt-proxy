@@ -1,27 +1,29 @@
 // src/queue.js
 const queue = [];
-let processing = false;
+let busy = false;
 
-async function processQueue(handler) {
-  if (processing || queue.length === 0) return;
-  processing = true;
+async function _run(handler) {
+  if (busy) return;
+  const job = queue.shift();
+  if (!job) return;
 
-  const { data, resolve, reject } = queue.shift();
+  busy = true;
   try {
-    const result = await handler(data);
-    resolve(result);
+    const result = await handler(job.data);
+    job.resolve(result);
   } catch (err) {
-    reject(err);
+    job.reject(err);
   } finally {
-    processing = false;
-    processQueue(handler);
+    busy = false;
+    // 다음 작업까지 약간의 텀(레이트리밋 여유)
+    setTimeout(() => _run(handler), 1100);
   }
 }
 
 function addToQueue(data, handler) {
   return new Promise((resolve, reject) => {
     queue.push({ data, resolve, reject });
-    processQueue(handler);
+    _run(handler);
   });
 }
 
