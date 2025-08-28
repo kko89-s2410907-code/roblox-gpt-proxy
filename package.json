@@ -1,23 +1,17 @@
 {
   "name": "roblox-gpt-proxy",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
+  "description": "Simple proxy server for Roblox -> OpenAI Chat Completions",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "body-parser": "^2.2.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "openai": "^5.16.0"
+    "start": "node src/index.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.19.2"
   }
 }
