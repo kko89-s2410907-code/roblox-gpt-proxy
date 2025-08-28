@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch");
 require("dotenv").config();
 
 const app = express();
@@ -14,7 +13,7 @@ app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
 
-    // OpenAI API 호출
+    // OpenAI API 호출 (내장 fetch 사용)
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -22,7 +21,7 @@ app.post("/chat", async (req, res) => {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // 안정적인 모델로 변경
+        model: "gpt-3.5-turbo", // 안정적 모델
         messages: [{ role: "user", content: userMessage }]
       })
     });
