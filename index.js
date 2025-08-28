@@ -5,6 +5,11 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 
+
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -23,6 +28,7 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
     res.send(data);
+
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
