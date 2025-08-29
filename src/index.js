@@ -1,56 +1,52 @@
 require("dotenv").config();
 const express = require("express");
-const axios = require("axios");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// 큐 같은 게 필요하면 queue.js에서 불러오기 가능
-// const { enqueue } = require("./queue");
+// health check
+app.get("/", (_, res) => res.send("ok"));
+app.get("/health", (_, res) => res.status(200).send("OK"));
 
-app.post("/gpt", async (req, res) => {
-    try {
-        const { message, userId } = req.body;
+async function askOpenAI({ message, userId }) {
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "너는 Roblox 속 NPC야. 짧고 친근하게 대답해." },
+        { role: "user", content: message }
+      ],
+      user: String(userId)
+    })
+  });
 
-        if (!message) {
-            return res.status(400).json({ error: "Message is required" });
-        }
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data?.error?.message || resp.statusText);
 
-        // OpenAI API 호출
-        const response = await axios.post(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                model: "gpt-3.5-turbo", // GPT 모델 (원하면 gpt-4로 변경 가능)
-                messages: [
-                    { role: "system", content: "너는 로블록스 게임 속 NPC 친구야. 플레이어랑 대화하듯 친근하게 답해." },
-                    { role: "user", content: message }
-                ],
-                max_tokens: 100,
-                temperature: 0.8
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-                }
-            }
-        );
+  return data?.choices?.[0]?.message?.content || "응답 없음";
+}
 
-        const reply = response.data.choices[0].message.content.trim();
-        res.json({ reply });
+app.post("/chat", async (req, res) => {
+  try {
+    const { message, userId } = req.body;
+    if (!message) return res.status(400).json({ error: "message required" });
 
-    } catch (error) {
-        console.error("GPT 요청 실패:", error.response?.data || error.message);
-        res.status(500).json({ error: "GPT API 요청 중 오류 발생" });
-    }
+    const reply = await askOpenAI({ message, userId });
+    return res.json({ reply });
+  } catch (err) {
+    console.error("GPT 요청 실패:", err.message);
+    res.status(500).json({ error: "GPT 요청 실패" });
+  }
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log("Server running on", PORT));
 
